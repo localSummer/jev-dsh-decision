@@ -1,10 +1,27 @@
 # 决策模型 Jev
 
-iPolloWork 官方维护的独立决策插件。同一份轻量核心，同时支持 iPolloWork 插件包与 DeepSeek Harness 原生插件。不修改 OpenCode、DSH 或 Codex 引擎，不接管主 Agent。
+**面向多种 Agent Harness 的 AI 决策插件。**
+
+将 TypeSafe AI 的 Jev 决策能力接入你的 Agent：帮助选择工具、Skill 和任务负责人，评估产出质量，并以结构化结果返回判断与概率。Jev 负责辅助决策，原 Agent 继续负责规划和执行。
+
+提供 **DeepSeek Harness 原生插件**和 **iPolloWork 导入插件**两个安装入口；在 iPolloWork 中可供 **OpenCode、DeepSeek Harness、Codex Harness** 使用。同一份决策核心，不修改引擎源码，不接管主 Agent。
 
 <img src="assets/jev.png" width="64" alt="Jev / TypeSafe AI" />
 
-## 能做什么
+**快速开始：**[安装到 DeepSeek Harness](#安装到-deepseek-harness) · [安装到 iPolloWork](#安装到-ipollowork)
+
+## 支持与接入方式
+
+| 使用环境 | 接入方式 | 安装入口 |
+| --- | --- | --- |
+| DeepSeek Harness（DSH） | 原生插件，独立运行，不依赖 iPolloWork | DSH 插件命令 |
+| iPolloWork | 独立导入、授权、启停与卸载 | 扩展 → 导入插件包 |
+| OpenCode | 通过 iPolloWork 的扩展接口使用 Jev | 在 iPolloWork 安装一次 |
+| Codex Harness | 通过 iPolloWork 的扩展接口使用 Jev | 在 iPolloWork 安装一次 |
+
+OpenCode 和 Codex Harness 当前支持的是 **iPolloWork 内的接入方式**，本仓库尚未提供它们各自的独立原生安装包。其他 Harness 可以基于共享决策核心开发适配器，不代表已经自动兼容。
+
+## 核心能力
 
 - 根据任务，在**当前真实可用且获准使用**的工具、Skill、Agent 之间推荐选择。
 - 按明确标准评分、判断是否需要某项能力；独立问题可以一次批量评估。
@@ -13,47 +30,83 @@ iPolloWork 官方维护的独立决策插件。同一份轻量核心，同时支
 
 Jev 是 TypeSafe AI 的结构化决策模型，不是聊天模型。原 Agent 继续负责规划、解释、参数构造、工具执行和原生子 Agent 协作。Jev 不返回文字推理过程，Agent 的解释不能冒充 Jev 的原始输出。
 
-## iPolloWork 安装
+## 安装到 DeepSeek Harness
 
-1. 下载 `jev-decision-model-0.1.0.ipollowork-plugin`。
-2. 在 **扩展 → 导入插件包** 中选择该文件，确认发布者为 **iPolloWork**。
-3. 打开插件授权，填写自己的 **TypeSafe API Key**，再运行“测试 Jev 连接”。不要把密钥发到聊天中。
-4. 在对话中启用插件，例如：“用 Jev 判断这个任务需要哪些已安装的 Skill，然后由你执行。”
+适合直接使用 DSH 的用户。**无需安装或运行 iPolloWork。**
 
-**兼容条件：**客户端必须包含 `ipollowork/ipollowork-2026` 官方签名公钥注册。旧版客户端没有此注册时会拒绝本地可执行插件，不能通过改名、伪装学校发布者或绕过校验解决。源代码声明的最低版本号不代表所有旧版本已包含此公钥。
+### 1. 安装插件
 
-官方签名公钥（SPKI DER，Base64）：
-
-```text
-MCowBQYDK2VwAyEAoHA9xxXNZPQ7y+AKpDBIXruNvwVasq7axjilzIY6RDE=
-```
-
-Work 通过原有 `ipollowork_extension_list_actions` / `ipollowork_extension_call` 暴露 `status`、`check-connection`、`evaluate`。Skill 随包归属、启停与卸载；插件没有额外的全局脚本或后台守护进程。卸载由 Work 清理包内容和插件授权，不会删除 TypeSafe 云端账户。
-
-## DSH 独立安装
-
-这是原生 `dsh.bundle`，不依赖运行 iPolloWork。安装已下载的包：
-
-```sh
-dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.0.tgz
-```
-
-也可以先克隆本仓库，再通过绝对路径安装：
+已安装 DSH 后，克隆本仓库，通过本地绝对路径安装：
 
 ```sh
 git clone https://github.com/Devin-AXIS/jev-decision-plugin.git
 dsh plugin add /absolute/path/jev-decision-plugin
 ```
 
-插件使用 DSH 原有凭据服务的 `TYPESAFE_API_KEY`。可用环境变量或 DSH 凭据管理配置，不要写入插件文件或聊天记录。需要启用 DSH 的 `credentials`、`tools` 和 `skills` 服务（官方默认配置提供这些服务）。本插件不会安装自己的凭据系统。
+把 `/absolute/path/jev-decision-plugin` 替换成克隆目录的实际绝对路径。插件使用原生 `dsh.bundle` 格式，无需构建源码。
 
-工具为 `jev_status`、`jev_check_connection`、`jev_evaluate`；Skill 为 `jev-decision`。工具遵循 DSH 的原生注册、权限和取消流程。卸载后新会话不再加载它们：
+如果已经拿到 `.tgz` 安装包，也可以直接安装：
+
+```sh
+dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.0.tgz
+```
+
+### 2. 配置授权
+
+在 DSH 的凭据管理或启动环境中配置自己的 **`TYPESAFE_API_KEY`**。不要把密钥写进插件源码或聊天记录。插件复用 DSH 的 `credentials`、`tools` 和 `skills` 服务；官方默认配置提供这些服务，自定义配置需要保留它们。
+
+### 3. 验证并使用
+
+重启运行中的 DSH 会话，让新配置生效，然后在对话中说：
+
+> 使用 Jev，先检查配置，再测试连接。
+
+插件提供 `jev_status`（本地状态）、`jev_check_connection`（真实连接测试）、`jev_evaluate`（结构化评估）三个工具，以及 `jev-decision` Skill。连接测试会产生少量 TypeSafe API 用量；本地显示“已配置”不代表密钥已经验证。
+
+### 卸载
 
 ```sh
 dsh plugin remove dsh-jev-decision-model
 ```
 
 DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他插件共用的 `TYPESAFE_API_KEY`；不再需要时请在 DSH 凭据管理或环境中移除。运行中的 DSH 会话应重启以加载新的插件配置。
+
+## 安装到 iPolloWork
+
+适合使用 Work 图形界面的用户。**在 Work 中安装一次，供其支持的 OpenCode、DeepSeek Harness、Codex Harness 引擎使用，无需分别安装三个包。**
+
+### 1. 导入安装包
+
+获取已签名的 `jev-decision-model-0.1.0.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
+
+**客户端要求：**需要包含 `ipollowork/ipollowork-2026` 官方签名公钥注册的 Work 版本。未包含此注册的旧客户端会拒绝导入；仅满足清单里的最低版本号不够。请勿绕过签名校验。
+
+### 2. 配置授权
+
+打开插件详情中的授权入口，填写自己的 **TypeSafe API Key**。密钥由 Work 的插件授权仓库保存，不需要发给对话中的 Agent。
+
+### 3. 验证并使用
+
+在对话中启用“决策模型 Jev”，然后说：
+
+> 使用 Jev，先检查配置，再测试连接。连接成功后，帮我选择适合当前任务的 Skill。
+
+Work 提供 `status`、`check-connection`、`evaluate` 三个动作，由现有扩展接口调用。这里的“测试连接”会发出一个真实且有少量用量的请求。
+
+### 卸载
+
+在 **扩展 → 决策模型 Jev → 卸载** 中移除。Skill、插件内容和专属授权由 Work 随包清理，没有另装全局脚本或后台守护进程；卸载不会删除 TypeSafe 云端账户。
+
+## 对话示例
+
+- “用 Jev 判断这项任务需要哪些已安装的 Skill，再由你执行。”
+- “从当前可用的 Agent 中，选出最适合负责竞品分析的一个。”
+- “按准确性、完整性和清晰度评估这份结果；不确定的部分交给我确认。”
+
+推荐结果不等于执行授权。需要外部操作时，仍遵循当前 Harness 的权限和确认流程。
+
+<details>
+<summary>开发者参考：调用格式、签名与测试</summary>
 
 ## 调用格式
 
@@ -99,7 +152,15 @@ IPOLLOWORK_ROOT=/path/to/updated/iPolloWork pnpm test:work
 pnpm package:dsh
 ```
 
+签名标识为 `ipollowork/ipollowork-2026`，公钥（SPKI DER，Base64）：
+
+```text
+MCowBQYDK2VwAyEAoHA9xxXNZPQ7y+AKpDBIXruNvwVasq7axjilzIY6RDE=
+```
+
 Work 集成测试使用真实宿主 API，在独立临时目录测试签名、图标、导入、授权轮换、服务调用、卸载及篡改拒绝。TypeSafe 响应使用明确的测试数据，不代表真实 API 密钥已验证。DSH 测试使用真实工具与 Skill 注册表，检查加载和卸载。
+
+</details>
 
 ## 来源与标识
 
@@ -107,4 +168,4 @@ Work 集成测试使用真实宿主 API，在独立临时目录测试签名、�
 - [DSH 官方插件开发文档](https://github.com/deepseek-ai/deepseek-harness/tree/master/docs/user/develop)
 - 图标原样取自 [TypeSafe 官方文档的黑色透明底图标](https://docs.typesafe.ai/mintlify-assets/_mintlify/favicons/ts-docs/zg2v0DiYB7xPw0I2/_generated/favicon/android-chrome-192x192.png)，安装包内嵌以便离线显示，未使用粉色版本。图标及品牌权利归原权利人所有。
 
-“官方”指 **iPolloWork 官方插件**，不表示 TypeSafe AI 或 DeepSeek 对此插件的官方背书。
+本项目由 **iPolloWork** 维护和发布。Jev 属于 TypeSafe AI；本项目不表示获得 TypeSafe AI、DeepSeek 或其他 Harness 项目的官方背书。

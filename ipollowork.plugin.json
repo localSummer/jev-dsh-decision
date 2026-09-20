@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "jev-decision-model",
   "name": "决策模型 Jev",
-  "description": "使用 Jev 选择工具、Skill 和任务负责人，按明确标准评分和判断；由当前 Agent 执行推荐结果。",
+  "description": "面向多种 Agent Harness 的 Jev 决策插件，为工具、Skill 和 Agent 提供结构化选择、评分与判断；由当前 Agent 执行。",
   "category": "AI Agent 与自动化",
   "icon": { "src": "https://docs.typesafe.ai/mintlify-assets/_mintlify/favicons/ts-docs/zg2v0DiYB7xPw0I2/_generated/favicon/android-chrome-192x192.png" },
   "source": {
