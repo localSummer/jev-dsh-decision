@@ -9,7 +9,7 @@
     "format": "ipollowork-extension-manifest",
     "origin": "local",
     "trusted": false,
-    "reference": "https://github.com/Devin-AXIS/jev-decision"
+    "reference": "https://github.com/Devin-AXIS/jev-dsh-decision"
   },
   "package": {
     "version": "0.1.2",

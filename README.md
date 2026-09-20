@@ -44,11 +44,11 @@ Jev 是 TypeSafe AI 的结构化决策模型，不是聊天模型。原 Agent �
 已安装 DSH 后，克隆本仓库，通过本地绝对路径安装：
 
 ```sh
-git clone https://github.com/Devin-AXIS/jev-decision.git
-dsh plugin add /absolute/path/jev-decision
+git clone https://github.com/Devin-AXIS/jev-dsh-decision.git
+dsh plugin add /absolute/path/jev-dsh-decision
 ```
 
-把 `/absolute/path/jev-decision` 替换成克隆目录的实际绝对路径。插件使用原生 `dsh.bundle` 格式，无需构建源码。
+把 `/absolute/path/jev-dsh-decision` 替换成克隆目录的实际绝对路径。插件使用原生 `dsh.bundle` 格式，无需构建源码。
 
 如果已经拿到 `.tgz` 安装包，也可以直接安装：
 
