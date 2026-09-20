@@ -1,4 +1,4 @@
-# Jev 决策引擎
+# Jev DSH 决策引擎
 
 [![iPolloWork Plugin](https://img.shields.io/badge/iPolloWork_Plugin-import-334155)](#安装到-ipollowork)
 [![DeepSeek Harness Plugin](https://img.shields.io/badge/DeepSeek_Harness_Plugin-native-2563eb)](#安装到-deepseek-harness)
@@ -84,7 +84,7 @@ DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他�
 
 获取已签名的 `jev-decision-model-0.1.2.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
 
-已安装旧版时，导入新版可沿用原插件身份升级。显示名称为“Jev 决策引擎”，内部插件 ID `jev-decision-model` 和 DSH 包名 `dsh-jev-decision-model` 保持不变。
+已安装旧版时，导入新版可沿用原插件身份升级。显示名称为“Jev DSH 决策引擎”，内部插件 ID `jev-decision-model` 和 DSH 包名 `dsh-jev-decision-model` 保持不变。
 
 **客户端要求：**需要包含 `ipollowork/ipollowork-2026` 官方签名公钥注册的 Work 版本。未包含此注册的旧客户端会拒绝导入；仅满足清单里的最低版本号不够。请勿绕过签名校验。
 
@@ -94,7 +94,7 @@ DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他�
 
 ### 3. 验证并使用
 
-在对话中启用“Jev 决策引擎”，然后说：
+在对话中启用“Jev DSH 决策引擎”，然后说：
 
 > 使用 Jev，先检查配置，再测试连接。连接成功后，帮我选择适合当前任务的 Skill。
 
@@ -102,7 +102,7 @@ Work 提供 `status`、`check-connection`、`evaluate` 三个动作，由现有�
 
 ### 卸载
 
-在 **扩展 → Jev 决策引擎 → 卸载** 中移除。Skill、插件内容和专属授权由 Work 随包清理，没有另装全局脚本或后台守护进程；卸载不会删除 TypeSafe 云端账户。
+在 **扩展 → Jev DSH 决策引擎 → 卸载** 中移除。Skill、插件内容和专属授权由 Work 随包清理，没有另装全局脚本或后台守护进程；卸载不会删除 TypeSafe 云端账户。
 
 ## 对话示例
 
