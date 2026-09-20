@@ -55,15 +55,16 @@ test('native DSH CLI installs the tarball bundle and removes its configuration',
   const root = await mkdtemp(resolve(tmpdir(), 'jev-dsh-cli-'));
   const cli = resolve(runtime, 'node_modules/@deepseek-ai/dsh/lib/bin.js');
   const run = async args => (await promisify(execFile)(process.execPath, [cli, ...args], { env: { ...process.env, DSH_HOME: root }, timeout: 20_000 })).stdout;
-  const archive = new URL('../dist/dsh-jev-decision-model-0.1.0.tgz', import.meta.url);
+  const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  const archive = new URL(`../dist/${manifest.name}-${manifest.version}.tgz`, import.meta.url);
   try {
     await run(['plugin', '--profile', 'jev-test', 'add', fileURLToPath(archive)]);
     const config = await run(['--profile', 'jev-test', '--dump-config']);
     assert.match(config, /name: dsh-jev-decision-model/);
     await run(['plugin', '--profile', 'jev-test', 'remove', 'dsh-jev-decision-model']);
     assert.doesNotMatch(await run(['--profile', 'jev-test', '--dump-config']), /name: dsh-jev-decision-model/);
-    const manifest = JSON.parse(await readFile(resolve(root, 'profiles/jev-test/package.json'), 'utf8'));
-    assert.ok(!manifest.dependencies?.['dsh-jev-decision-model']);
-    assert.deepEqual(manifest.dsh.profile.bundles, ['@deepseek-ai/dsh-base']);
+    const profile = JSON.parse(await readFile(resolve(root, 'profiles/jev-test/package.json'), 'utf8'));
+    assert.ok(!profile.dependencies?.['dsh-jev-decision-model']);
+    assert.deepEqual(profile.dsh.profile.bundles, ['@deepseek-ai/dsh-base']);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

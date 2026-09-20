@@ -1,23 +1,23 @@
 {
   "schemaVersion": 2,
   "id": "jev-decision-model",
-  "name": "决策模型 Jev",
-  "description": "面向多种 Agent Harness 的 Jev 决策插件，为工具、Skill 和 Agent 提供结构化选择、评分与判断；由当前 Agent 执行。",
+  "name": "Jev 通用 Harness 决策引擎",
+  "description": "Jev 为多种 Agent Harness 提供结构化决策能力，辅助选择工具、Skill 和 Agent，进行评分与判断；由当前 Agent 执行。",
   "category": "AI Agent 与自动化",
   "icon": { "src": "https://docs.typesafe.ai/mintlify-assets/_mintlify/favicons/ts-docs/zg2v0DiYB7xPw0I2/_generated/favicon/android-chrome-192x192.png" },
   "source": {
     "format": "ipollowork-extension-manifest",
     "origin": "local",
     "trusted": false,
-    "reference": "https://github.com/Devin-AXIS/jev-decision-plugin"
+    "reference": "https://github.com/Devin-AXIS/jev-harness-decision-engine"
   },
   "package": {
-    "version": "0.1.0",
+    "version": "0.1.1",
     "publisher": { "id": "ipollowork", "name": "iPolloWork" },
     "compatibility": { "ipollowork": ">=0.21.0" },
     "updateId": "ipollowork/jev-decision-model"
   },
-  "composer": { "prompt": "使用决策模型 Jev，帮助我选择适合当前任务的工具、Skill 或 Agent，并解释推荐结果。" },
+  "composer": { "prompt": "使用 Jev 通用 Harness 决策引擎，帮助我选择适合当前任务的工具、Skill 或 Agent，并解释推荐结果。" },
   "setup": {
     "instructions": "在 TypeSafe AI 控制台创建 API Key，然后在此插件中连接。连接测试会发送一个最小评估请求；状态检查只检查本地配置。待评估内容将发送至 TypeSafe AI。",
     "testActionRef": "check-connection"

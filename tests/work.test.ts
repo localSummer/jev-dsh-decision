@@ -9,8 +9,10 @@ const host = process.env.IPOLLOWORK_ROOT;
 if (!host) throw new Error('Set IPOLLOWORK_ROOT to the checkout containing the official signing-key registration.');
 const { startServer } = await import(pathToFileURL(resolve(host, 'apps/server/src/server.ts')).href);
 const originalFetch = globalThis.fetch;
-const archive = await JSZip.loadAsync(await readFile(new URL('../dist/jev-decision-model-0.1.0.ipollowork-plugin', import.meta.url)));
-const upload = { archiveName: 'jev-decision-model-0.1.0.ipollowork-plugin', files: await Promise.all(
+const manifest = JSON.parse(await readFile(new URL('../ipollowork.plugin.json', import.meta.url), 'utf8'));
+const archiveName = `${manifest.id}-${manifest.package.version}.ipollowork-plugin`;
+const archive = await JSZip.loadAsync(await readFile(new URL(`../dist/${archiveName}`, import.meta.url)));
+const upload = { archiveName, files: await Promise.all(
   Object.values(archive.files).filter(file => !file.dir).map(async file => ({ path: file.name, contentBase64: await file.async('base64') })),
 ) };
 
@@ -46,6 +48,7 @@ test.each(['opencode', 'deepseek-harness', 'codex-harness'])('Work import, autho
   const action = (name: string, args = {}) => call('/experimental/extensions/call', 'POST', { extensionId: 'jev-decision-model', action: name, args, context: { directory: root } });
   try {
     const preview = await call(prefix + '/import/validate', 'POST', upload);
+    expect(preview.preview.manifest.name).toBe('Jev 通用 Harness 决策引擎');
     expect(preview.preview.safety.publisher).toEqual({ id: 'ipollowork', name: 'iPolloWork' });
     expect(preview.preview.safety.signature.status).toBe('verified');
     const icon = preview.preview.manifest.icon.src;
