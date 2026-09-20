@@ -48,7 +48,7 @@ test.each(['opencode', 'deepseek-harness', 'codex-harness'])('Work import, autho
   const action = (name: string, args = {}) => call('/experimental/extensions/call', 'POST', { extensionId: 'jev-decision-model', action: name, args, context: { directory: root } });
   try {
     const preview = await call(prefix + '/import/validate', 'POST', upload);
-    expect(preview.preview.manifest.name).toBe('Jev 通用 Harness 决策引擎');
+    expect(preview.preview.manifest.name).toBe(manifest.name);
     expect(preview.preview.safety.publisher).toEqual({ id: 'ipollowork', name: 'iPolloWork' });
     expect(preview.preview.safety.signature.status).toBe('verified');
     const icon = preview.preview.manifest.icon.src;

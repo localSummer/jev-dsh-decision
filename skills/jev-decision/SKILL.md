@@ -3,7 +3,7 @@ name: jev-decision
 description: Use Jev to select among available tools, skills or agents, or evaluate outputs against explicit rubrics. Use when the user requests Jev or a bounded decision would help; not for open-ended writing or research.
 ---
 
-# Jev 通用 Harness 决策引擎
+# Jev 决策引擎
 
 Jev returns structured judgments. The current Agent retains planning, parameter construction, execution and native subagent collaboration.
 

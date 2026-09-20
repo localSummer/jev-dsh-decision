@@ -1,4 +1,9 @@
-# Jev 通用 Harness 决策引擎
+# Jev 决策引擎
+
+[![iPolloWork](https://img.shields.io/badge/iPolloWork-plugin-334155)](#安装到-ipollowork)
+[![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-native-2563eb)](#安装到-deepseek-harness)
+[![OpenCode](https://img.shields.io/badge/OpenCode-via_Work-475569)](#支持与接入方式)
+[![Codex Harness](https://img.shields.io/badge/Codex_Harness-via_Work-475569)](#支持与接入方式)
 
 **为 Agent Harness 提供结构化决策能力。**
 
@@ -39,16 +44,16 @@ Jev 是 TypeSafe AI 的结构化决策模型，不是聊天模型。原 Agent �
 已安装 DSH 后，克隆本仓库，通过本地绝对路径安装：
 
 ```sh
-git clone https://github.com/Devin-AXIS/jev-harness-decision-engine.git
-dsh plugin add /absolute/path/jev-harness-decision-engine
+git clone https://github.com/Devin-AXIS/jev-decision.git
+dsh plugin add /absolute/path/jev-decision
 ```
 
-把 `/absolute/path/jev-harness-decision-engine` 替换成克隆目录的实际绝对路径。插件使用原生 `dsh.bundle` 格式，无需构建源码。
+把 `/absolute/path/jev-decision` 替换成克隆目录的实际绝对路径。插件使用原生 `dsh.bundle` 格式，无需构建源码。
 
 如果已经拿到 `.tgz` 安装包，也可以直接安装：
 
 ```sh
-dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.1.tgz
+dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 ```
 
 ### 2. 配置授权
@@ -77,9 +82,9 @@ DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他�
 
 ### 1. 导入安装包
 
-获取已签名的 `jev-decision-model-0.1.1.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
+获取已签名的 `jev-decision-model-0.1.2.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
 
-已安装旧版时，导入新版可沿用原插件身份升级。显示名称更新为“Jev 通用 Harness 决策引擎”，内部插件 ID `jev-decision-model` 和 DSH 包名 `dsh-jev-decision-model` 保持不变。
+已安装旧版时，导入新版可沿用原插件身份升级。显示名称为“Jev 决策引擎”，内部插件 ID `jev-decision-model` 和 DSH 包名 `dsh-jev-decision-model` 保持不变。
 
 **客户端要求：**需要包含 `ipollowork/ipollowork-2026` 官方签名公钥注册的 Work 版本。未包含此注册的旧客户端会拒绝导入；仅满足清单里的最低版本号不够。请勿绕过签名校验。
 
@@ -89,7 +94,7 @@ DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他�
 
 ### 3. 验证并使用
 
-在对话中启用“Jev 通用 Harness 决策引擎”，然后说：
+在对话中启用“Jev 决策引擎”，然后说：
 
 > 使用 Jev，先检查配置，再测试连接。连接成功后，帮我选择适合当前任务的 Skill。
 
@@ -97,7 +102,7 @@ Work 提供 `status`、`check-connection`、`evaluate` 三个动作，由现有�
 
 ### 卸载
 
-在 **扩展 → Jev 通用 Harness 决策引擎 → 卸载** 中移除。Skill、插件内容和专属授权由 Work 随包清理，没有另装全局脚本或后台守护进程；卸载不会删除 TypeSafe 云端账户。
+在 **扩展 → Jev 决策引擎 → 卸载** 中移除。Skill、插件内容和专属授权由 Work 随包清理，没有另装全局脚本或后台守护进程；卸载不会删除 TypeSafe 云端账户。
 
 ## 对话示例
 
