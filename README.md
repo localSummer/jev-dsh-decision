@@ -1,9 +1,9 @@
 # Jev 决策引擎
 
-[![iPolloWork](https://img.shields.io/badge/iPolloWork-plugin-334155)](#安装到-ipollowork)
-[![DeepSeek Harness](https://img.shields.io/badge/DeepSeek_Harness-native-2563eb)](#安装到-deepseek-harness)
-[![OpenCode](https://img.shields.io/badge/OpenCode-via_Work-475569)](#支持与接入方式)
-[![Codex Harness](https://img.shields.io/badge/Codex_Harness-via_Work-475569)](#支持与接入方式)
+[![iPolloWork Plugin](https://img.shields.io/badge/iPolloWork_Plugin-import-334155)](#安装到-ipollowork)
+[![DeepSeek Harness Plugin](https://img.shields.io/badge/DeepSeek_Harness_Plugin-native-2563eb)](#安装到-deepseek-harness)
+[![OpenCode Plugin](https://img.shields.io/badge/OpenCode_Plugin-via_Work-475569)](#支持与接入方式)
+[![Codex Harness Plugin](https://img.shields.io/badge/Codex_Harness_Plugin-via_Work-475569)](#支持与接入方式)
 
 **为 Agent Harness 提供结构化决策能力。**
 
