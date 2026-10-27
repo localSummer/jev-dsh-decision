@@ -1,7 +1,24 @@
 import { setTimeout as delay } from 'node:timers/promises';
 
-export const MODEL = 'jev-latest';
-const ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
+/** Provider presets: the single source of truth both adapters normalize into. */
+export const PROVIDERS = {
+  typesafe: { label: 'TypeSafe AI', baseURL: 'https://api.typesafe.ai', path: '/v1/systemone', model: 'jev-latest', apiKeyRef: 'TYPESAFE_API_KEY', maxQuestions: 64 },
+  openrouter: { label: 'OpenRouter', baseURL: 'https://openrouter.ai/api', path: '/alpha/decisions', model: 'typesafe/jev-latest', apiKeyRef: 'OPENROUTER_API_KEY', maxQuestions: 64 },
+  bocha: { label: '博查', baseURL: 'https://jev.bocha.cn', path: '/v1/systemone', model: 'bocha-jev-v1', apiKeyRef: 'BOCHA_JEV_API_KEY', maxQuestions: 32 },
+};
+
+/** Compose the effective provider config: overrides fall back to the preset. */
+export function providerConfig(id, overrides = {}) {
+  const preset = PROVIDERS[id] ?? {};
+  return {
+    label: preset.label,
+    endpoint: `${(overrides.baseURL || preset.baseURL).trim().replace(/\/+$/, '')}${preset.path}`,
+    model: overrides.model || preset.model,
+    apiKeyRef: overrides.apiKeyRef || preset.apiKeyRef,
+    maxQuestions: preset.maxQuestions,
+  };
+}
+
 const REQUEST_BYTES = 256 * 1024;
 const RESPONSE_BYTES = 1024 * 1024;
 const record = value => value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -11,12 +28,13 @@ const probability = value => typeof value === 'number' && Number.isFinite(value)
 const requireValue = (condition, message) => { if (!condition) throw new Error(message); };
 
 /** Validate once at the shared boundary; neither adapter may weaken the contract. */
-export function requestBody(input) {
+export function requestBody(input, { model, maxQuestions = 64 } = {}) {
+  requireValue(typeof model === 'string' && model.trim().length > 0, '缺少有效的模型名。');
   requireValue(record(input) && Object.keys(input).every(key => ['state', 'questions'].includes(key)), '只接受 state 和 questions。');
   requireValue(content(input.state), 'state 必须是非空文本、对象或数组。');
   requireValue(record(input.questions), 'questions 必须是问题 ID 到问题对象的映射。');
   const questions = Object.entries(input.questions);
-  requireValue(questions.length >= 1 && questions.length <= 64, '每次评估需要 1–64 个问题。');
+  requireValue(questions.length >= 1 && questions.length <= maxQuestions, `每次评估需要 1–${maxQuestions} 个问题。`);
   for (const [id, question] of questions) {
     requireValue(id.trim().length > 0 && id.length <= 160, '问题 ID 需要 1–160 个字符。');
     requireValue(record(question) && Object.keys(question).every(key => ['type', 'instructions', 'criteria'].includes(key)), '问题只接受 type、instructions 和 criteria。');
@@ -37,7 +55,7 @@ export function requestBody(input) {
   }
   let body;
   try {
-    body = JSON.stringify({ state: input.state, questions: input.questions, model: MODEL }, (_key, value) => {
+    body = JSON.stringify({ state: input.state, questions: input.questions, model }, (_key, value) => {
       if (value === undefined || typeof value === 'function' || typeof value === 'symbol' || (typeof value === 'number' && !Number.isFinite(value))) throw new Error();
       return value;
     });
@@ -72,7 +90,7 @@ function responseValue(value, questions) {
     return [id, { ...shared, score: answer.score, legend: answer.legend }];
   }));
   requireValue(record(value.usage) && ['input_tokens', 'output_tokens'].every(key => Number.isSafeInteger(value.usage[key]) && value.usage[key] >= 0), invalid);
-  return { provider: 'TypeSafe AI', model: value.model, answers, usage: { input_tokens: value.usage.input_tokens, output_tokens: value.usage.output_tokens } };
+  return { model: value.model, answers, usage: { input_tokens: value.usage.input_tokens, output_tokens: value.usage.output_tokens } };
 }
 
 async function readResponse(response) {
@@ -96,29 +114,36 @@ async function readResponse(response) {
 }
 
 /** Host-owned key lookup is performed for every call; keys and payloads are never logged. */
-export function createJevActions({ getApiKey, fetcher = globalThis.fetch, timeoutMs = 20_000 }) {
+export function createJevActions({ getConfig, getApiKey, fetcher = globalThis.fetch, timeoutMs = 20_000 }) {
+  requireValue(typeof getConfig === 'function', 'getConfig 必须是函数。');
   requireValue(Number.isFinite(timeoutMs) && timeoutMs > 0, 'timeoutMs 必须大于 0。');
   const lifetime = new AbortController();
-  const apiKey = async () => {
+  const resolveConfig = () => {
+    const config = getConfig();
+    try { new URL(config.endpoint); } catch { throw new Error('Jev baseURL 配置无效，请检查插件设置。'); }
+    return config;
+  };
+  const apiKey = async ref => {
     const value = await getApiKey();
-    requireValue(typeof value === 'string' && value.trim() && !/[\r\n]/.test(value), '请先在插件授权中配置 TypeSafe API Key；DSH 使用 TYPESAFE_API_KEY 凭据。');
+    requireValue(typeof value === 'string' && value.trim() && !/[\r\n]/.test(value), `请先为 ${ref}（DSH 凭据或环境变量）配置 API Key，再用 jev_check_connection 验证。`);
     return value.trim();
   };
   const evaluate = async (input, options = {}) => {
-    const body = requestBody(input);
-    const key = await apiKey();
+    const config = resolveConfig();
+    const body = requestBody(input, config);
+    const key = await apiKey(config.apiKeyRef);
     const deadline = AbortSignal.timeout(timeoutMs);
     const signal = AbortSignal.any([lifetime.signal, deadline, ...(options.signal ? [options.signal] : [])]);
     try {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         signal.throwIfAborted();
-        const response = await fetcher(ENDPOINT, {
+        const response = await fetcher(config.endpoint, {
           method: 'POST', redirect: 'error', signal,
           headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body,
         });
-        if (response.ok) return responseValue(await readResponse(response), JSON.parse(body).questions);
+        if (response.ok) return { provider: config.label, ...responseValue(await readResponse(response), JSON.parse(body).questions) };
         await response.body?.cancel();
-        if ([429, 529].includes(response.status) && attempt < 2) {
+        if ([429, 503, 529].includes(response.status) && attempt < 2) {
           const retry = response.headers.get('retry-after');
           const seconds = retry === null ? NaN : Number(retry);
           const backoff = Number.isFinite(seconds) ? seconds * 1000 : retry ? Date.parse(retry) - Date.now() : 250 * (2 ** attempt);
@@ -128,7 +153,7 @@ export function createJevActions({ getApiKey, fetcher = globalThis.fetch, timeou
         }
         if (response.status === 401) throw new Error('Jev API Key 无效，请重新连接。');
         if (response.status === 422) throw new Error('Jev 不接受此评估请求，请检查问题和判断标准。');
-        if ([429, 529].includes(response.status)) throw new Error('Jev 暂时繁忙，请稍后重试。');
+        if ([429, 503, 529].includes(response.status)) throw new Error('Jev 暂时繁忙，请稍后重试。');
         throw new Error(`Jev 请求失败（HTTP ${response.status}）。`);
       }
     } catch (error) {
@@ -142,7 +167,10 @@ export function createJevActions({ getApiKey, fetcher = globalThis.fetch, timeou
   return {
     dispose: () => lifetime.abort(),
     actions: {
-      status: async () => ({ provider: 'TypeSafe AI', model: MODEL, configured: Boolean((await getApiKey())?.trim()), remoteVerified: false, primitives: ['choice', 'score', 'noul'] }),
+      status: async () => {
+        const config = resolveConfig();
+        return { provider: config.label, endpoint: config.endpoint, model: config.model, apiKeyRef: config.apiKeyRef, configured: Boolean((await getApiKey())?.trim()), remoteVerified: false, primitives: ['choice', 'score', 'noul'] };
+      },
       'check-connection': async (_input = {}, options = {}) => {
         const result = await evaluate({ state: 'Connection check.', questions: { connected: { type: 'noul', instructions: 'Does this text describe a connection check?' } } }, options);
         return { connected: true, provider: result.provider, model: result.model, usage: result.usage };

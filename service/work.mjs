@@ -1,7 +1,9 @@
-import { createJevActions } from './jev.mjs';
+import { createJevActions, providerConfig } from './jev.mjs';
 
 export default function createService(runtime) {
+  const preset = providerConfig('typesafe');
   const service = createJevActions({
+    getConfig: () => preset,
     getApiKey: async () => (await runtime.authorization.getCredential('typesafe-api-key'))?.apiKey,
   });
   return {

@@ -56,9 +56,31 @@ dsh plugin add /absolute/path/jev-dsh-decision
 dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 ```
 
-### 2. 配置授权
+### 2. 配置授权与 Provider
 
-在 DSH 的凭据管理或启动环境中配置自己的 **`TYPESAFE_API_KEY`**。不要把密钥写进插件源码或聊天记录。插件复用 DSH 的 `credentials`、`tools` 和 `skills` 服务；官方默认配置提供这些服务，自定义配置需要保留它们。
+在 DSH 的凭据管理或启动环境中配置所选 Provider 的 API Key。不要把密钥写进插件源码或聊天记录。插件复用 DSH 的 `credentials`、`tools` 和 `skills` 服务；官方默认配置提供这些服务，自定义配置需要保留它们。
+
+支持三个 Provider，在 Web GUI 的 **设置 → Jev 决策引擎** 分区切换生效（配置在线生效，无需重启会话），也可在 profile patch 中直接书写：
+
+| Provider | 默认 API 根地址 | 默认模型 | 默认凭据引用名 |
+| --- | --- | --- | --- |
+| TypeSafe AI | `https://api.typesafe.ai` | `jev-latest` | `TYPESAFE_API_KEY` |
+| OpenRouter | `https://openrouter.ai/api` | `typesafe/jev-latest` | `OPENROUTER_API_KEY` |
+| 博查 | `https://jev.bocha.cn` | `bocha-jev-v1` | `BOCHA_JEV_API_KEY` |
+
+每个 Provider 可覆盖 **API 根地址**、**凭据引用名** 和 **模型名**（留空用官方默认；博查可把凭据引用名配置成 `BOCHA_SEARCH_API_KEY` 复用已有密钥）：
+
+```yaml
+# ~/.dsh/profiles/<profile>/cordis.patch.yml 中该插件条目的 config
+- id: jev-decision-model
+  name: dsh-jev-decision-model
+  config:
+    provider: openrouter
+    openrouter:
+      model: typesafe/jev-1.13
+```
+
+博查 Jev 每次请求最多 32 个问题，另外两家为 64；插件会在本地按当前 Provider 校验。密钥值仍走 DSH 凭据引用（每次调用实时解析，轮换无需重启），不进入配置文件。
 
 ### 3. 验证并使用
 
@@ -66,7 +88,7 @@ dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 
 > 使用 Jev，先检查配置，再测试连接。
 
-插件提供 `jev_status`（本地状态）、`jev_check_connection`（真实连接测试）、`jev_evaluate`（结构化评估）三个工具，以及 `jev-decision` Skill。连接测试会产生少量 TypeSafe API 用量；本地显示“已配置”不代表密钥已经验证。
+插件提供 `jev_status`（本地状态，含当前 Provider、端点、模型与凭据引用名）、`jev_check_connection`（真实连接测试）、`jev_evaluate`（结构化评估）三个工具，以及 `jev-decision` Skill。连接测试会产生少量 API 用量；本地显示“已配置”不代表密钥已经验证。
 
 ### 卸载
 
@@ -74,7 +96,7 @@ dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 dsh plugin remove dsh-jev-decision-model
 ```
 
-DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他插件共用的 `TYPESAFE_API_KEY`；不再需要时请在 DSH 凭据管理或环境中移除。运行中的 DSH 会话应重启以加载新的插件配置。
+DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他插件共用的凭据引用（`TYPESAFE_API_KEY`、`OPENROUTER_API_KEY`、`BOCHA_JEV_API_KEY`）；不再需要时请在 DSH 凭据管理或环境中移除。运行中的 DSH 会话应重启以加载新的插件配置。
 
 ## 安装到 iPolloWork
 
@@ -134,13 +156,13 @@ Work 提供 `status`、`check-connection`、`evaluate` 三个动作，由现有�
 }
 ```
 
-问题类型是 `choice`（单选）、`score`（等级评分）、`noul`（是的概率）。多个互补 Skill 可使用多个独立 `noul` 问题。传入最小必要上下文，不传密钥或无关私密资料。网络固定发往 `https://api.typesafe.ai/v1/systemone`；默认模型 `jev-latest`。
+问题类型是 `choice`（单选）、`score`（等级评分）、`noul`（是的概率）。多个互补 Skill 可使用多个独立 `noul` 问题。传入最小必要上下文，不传密钥或无关私密资料。网络按当前 Provider 的端点发出（默认值见上方表格）；模型与端点可在插件设置中覆盖。
 
-插件限制每次 64 个问题、256 KiB 请求、1 MiB 响应、20 秒总网络时限；仅对 429/529 最多重试两次。没有无限重试、后台自动学习或全局请求拦截。错误会脱敏，不返回上游错误正文。
+插件限制每次 64 个问题（博查 32 个）、256 KiB 请求、1 MiB 响应、20 秒总网络时限；仅对 429/503/529 最多重试两次。没有无限重试、后台自动学习或全局请求拦截。错误会脱敏，不返回上游错误正文。
 
 ## 开发和测试
 
-Node >=20.11，pnpm；运行时零第三方依赖。JSZip 仅用于开发时构建 Work 包。
+Node >=20.11，pnpm；运行时依赖 `@deepseek-ai/schemastery`（插件配置 schema），JSZip 仅用于开发时构建 Work 包。客户端设置分区为手写零构建 bundle，不需要任何前端构建链。
 
 ```sh
 pnpm install --frozen-lockfile

@@ -11,7 +11,7 @@ Jev returns structured judgments. The current Agent retains planning, parameter 
 
 - In iPolloWork, discover `jev-decision-model` with `ipollowork_extension_list_actions`, then use `ipollowork_extension_call` with action `evaluate` and the payload below in `args`.
 - In standalone DSH, use `jev_evaluate` with the same payload. `jev_status` checks local configuration; `jev_check_connection` verifies the key with a small billable request.
-- Work also exposes `status` and `check-connection`. A configured key is not proof of a successful API connection. If missing or invalid, direct the user to plugin authorization (Work) or the `TYPESAFE_API_KEY` credential (DSH); do not request the key in chat.
+- Work also exposes `status` and `check-connection`. A configured key is not proof of a successful API connection. If missing or invalid, direct the user to plugin authorization (Work) or, in DSH, the credential named by `jev_status`'s `apiKeyRef` (default `TYPESAFE_API_KEY`, `OPENROUTER_API_KEY` or `BOCHA_JEV_API_KEY` per provider); do not request the key in chat.
 
 ## Choose and prepare
 
@@ -23,7 +23,7 @@ Send the task and minimal relevant context as `state`; do not send credentials, 
 - `score`: grade against 2–10 ordered levels, indexed from zero. Several independent scores can rank candidates.
 - `noul`: estimate the probability of a clearly stated yes/no condition. To select multiple complementary skills, batch one relevance question per candidate instead of forcing a single Choice. A value near 0.5 means uncertainty, not medium skill.
 
-Batch independent questions sharing a state; use a later request if a question depends on an earlier result. Plugin bounds are 64 questions and 256 KiB per request. These are plugin limits, not claims about the provider's limits.
+Batch independent questions sharing a state; use a later request if a question depends on an earlier result. Plugin bounds are up to 64 questions per request (32 for the Bocha provider) and 256 KiB. These are plugin limits, not claims about the provider's limits.
 
 ```json
 {
