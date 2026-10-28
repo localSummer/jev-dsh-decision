@@ -58,17 +58,17 @@ dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 
 ### 2. 配置授权与 Provider
 
-在 DSH 的凭据管理或启动环境中配置所选 Provider 的 API Key。不要把密钥写进插件源码或聊天记录。插件复用 DSH 的 `credentials`、`tools` 和 `skills` 服务；官方默认配置提供这些服务，自定义配置需要保留它们。
+在设置页的 **API Key** 输入框中直接填写所选 Provider 的密钥（保存到 DSH 凭据存储，不写入配置文件；留空保持当前密钥），也可在 DSH 的凭据管理或启动环境中配置。不要把密钥写进插件源码或聊天记录。插件复用 DSH 的 `credentials`、`tools` 和 `skills` 服务；官方默认配置提供这些服务，自定义配置需要保留它们。
 
-支持三个 Provider，在 Web GUI 的 **设置 → Jev 决策引擎** 分区切换生效（配置在线生效，无需重启会话），也可在 profile patch 中直接书写：
+支持三个 Provider，在 Web GUI 的 **设置 → Jev 决策引擎** 分区修改后点击「保存修改」生效（保存后在线生效，无需重启会话；未保存的修改只留在页面草稿中），也可在 profile patch 中直接书写：
 
 | Provider | 默认 API 根地址 | 默认模型 | 默认凭据引用名 |
 | --- | --- | --- | --- |
 | TypeSafe AI | `https://api.typesafe.ai` | `jev-latest` | `TYPESAFE_API_KEY` |
-| OpenRouter | `https://openrouter.ai/api` | `typesafe/jev-latest` | `OPENROUTER_API_KEY` |
+| OpenRouter | `https://openrouter.ai/api` | `~typesafe/jev-latest` | `OPENROUTER_API_KEY` |
 | 博查 | `https://jev.bocha.cn` | `bocha-jev-v1` | `BOCHA_JEV_API_KEY` |
 
-每个 Provider 可覆盖 **API 根地址**、**凭据引用名** 和 **模型名**（留空用官方默认；博查可把凭据引用名配置成 `BOCHA_SEARCH_API_KEY` 复用已有密钥）：
+每个 Provider 可覆盖 **API 根地址**、**凭据引用名** 和 **模型名**（留空用官方默认；博查可把凭据引用名配置成 `BOCHA_SEARCH_API_KEY` 复用已有密钥）。密钥值不进配置文件：设置页的 **API Key** 输入框走 DSH 凭据存储（`remote.credentials`），配置文件里只有引用名，每次调用实时解析。
 
 ```yaml
 # ~/.dsh/profiles/<profile>/cordis.patch.yml 中该插件条目的 config

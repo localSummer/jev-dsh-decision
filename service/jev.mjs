@@ -3,7 +3,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 /** Provider presets: the single source of truth both adapters normalize into. */
 export const PROVIDERS = {
   typesafe: { label: 'TypeSafe AI', baseURL: 'https://api.typesafe.ai', path: '/v1/systemone', model: 'jev-latest', apiKeyRef: 'TYPESAFE_API_KEY', maxQuestions: 64 },
-  openrouter: { label: 'OpenRouter', baseURL: 'https://openrouter.ai/api', path: '/alpha/decisions', model: 'typesafe/jev-latest', apiKeyRef: 'OPENROUTER_API_KEY', maxQuestions: 64 },
+  openrouter: { label: 'OpenRouter', baseURL: 'https://openrouter.ai/api', path: '/alpha/decisions', model: '~typesafe/jev-latest', apiKeyRef: 'OPENROUTER_API_KEY', maxQuestions: 64 },
   bocha: { label: '博查', baseURL: 'https://jev.bocha.cn', path: '/v1/systemone', model: 'bocha-jev-v1', apiKeyRef: 'BOCHA_JEV_API_KEY', maxQuestions: 32 },
 };
 

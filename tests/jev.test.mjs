@@ -20,7 +20,7 @@ test('provider presets compose documented endpoints, models and key references',
   assert.equal(providerConfig('typesafe').endpoint, 'https://api.typesafe.ai/v1/systemone');
   assert.equal(providerConfig('openrouter').endpoint, 'https://openrouter.ai/api/alpha/decisions');
   assert.equal(providerConfig('bocha').endpoint, 'https://jev.bocha.cn/v1/systemone');
-  assert.equal(providerConfig('openrouter').model, 'typesafe/jev-latest');
+  assert.equal(providerConfig('openrouter').model, '~typesafe/jev-latest');
   assert.equal(providerConfig('bocha').apiKeyRef, 'BOCHA_JEV_API_KEY');
   assert.equal(providerConfig('bocha').maxQuestions, 32);
   const overridden = providerConfig('openrouter', { baseURL: 'https://mirror.example.com/', model: 'typesafe/jev-1.13', apiKeyRef: 'SHARED_KEY' });

@@ -7,7 +7,7 @@ window.__ModuleLoader__.load({
     const exports = module.exports;
     const React = require('react');
     const P = require('@deepseek-ai/dsh-client-ui-primitives');
-    const { createElement: h, memo, useCallback, useEffect, useRef, useState } = React;
+    const { createElement: h, memo, useCallback, useEffect, useState } = React;
 
     const ENTRY_ID = 'jev-decision-model';
     const PLUGIN_ID = 'dsh-jev-decision-model';
@@ -16,7 +16,7 @@ window.__ModuleLoader__.load({
     // 官方默认值，仅用于展示与 placeholder；生效值由 host 半归一化。
     const PROVIDERS = {
       typesafe: { label: 'TypeSafe AI', baseURL: 'https://api.typesafe.ai', model: 'jev-latest', apiKeyRef: 'TYPESAFE_API_KEY' },
-      openrouter: { label: 'OpenRouter', baseURL: 'https://openrouter.ai/api', model: 'typesafe/jev-latest', apiKeyRef: 'OPENROUTER_API_KEY' },
+      openrouter: { label: 'OpenRouter', baseURL: 'https://openrouter.ai/api', model: '~typesafe/jev-latest', apiKeyRef: 'OPENROUTER_API_KEY' },
       bocha: { label: '博查', baseURL: 'https://jev.bocha.cn', model: 'bocha-jev-v1', apiKeyRef: 'BOCHA_JEV_API_KEY' },
     };
     const ORDER = ['typesafe', 'openrouter', 'bocha'];
@@ -55,6 +55,16 @@ window.__ModuleLoader__.load({
       '.jev-stg-clear[data-hidden]{visibility:hidden}',
       '.jev-stg-hint{margin:0;font-size:12.5px;line-height:18px;color:var(--dsw-alias-label-tertiary)}',
       '.jev-stg-hint code{font-family:var(--dsw-font-mono,ui-monospace,Menlo,monospace);font-size:11.5px;background:var(--dsw-alias-bg-module-platform,rgba(127,127,127,.14));border-radius:4px;padding:1px 6px}',
+      '.jev-stg-keyclear{border:none;background:transparent;font:inherit;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);cursor:pointer;padding:6px 8px;border-radius:6px;flex:none}',
+      '.jev-stg-keyclear:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover);color:var(--dsw-alias-label-secondary)}',
+      '.jev-stg-keyclear:disabled{opacity:.5;cursor:default}',
+      '.jev-stg-savebar{display:flex;justify-content:flex-end}',
+      '.jev-stg-savebtn{box-sizing:border-box;border:none;border-radius:var(--dsw-radius-md,8px);height:36px;padding:0 14px;font:inherit;font-size:14px;line-height:22px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:4px;background:var(--dsw-alias-button-primary-fill,var(--dsw-alias-state-business-primary));color:var(--dsw-alias-label-primary-foreground,#fff);transition:background .15s,opacity .15s}',
+      '.jev-stg-savebtn:not(:disabled):hover{background:var(--dsw-alias-button-primary-hover,var(--dsw-alias-state-business-primary))}',
+      '.jev-stg-savebtn:disabled{opacity:.4;cursor:default}',
+      '.jev-stg-savebtn:disabled:not([data-state=saving]){background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);opacity:1}',
+      '.jev-stg-savebtn:focus-visible{box-shadow:0 0 0 2px var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline:none}',
+      '.jev-stg-savebtn[data-state=error]{background:var(--dsw-alias-state-error-primary);color:var(--dsw-alias-label-primary-foreground,#fff)}',
     ].join('\n');
 
     function injectStyles() {
@@ -100,6 +110,32 @@ window.__ModuleLoader__.load({
             onClick: () => { setDraft(''); props.onClear(); } }, Icon(P.IconCloseFillMedium, 12))));
     });
 
+    /** API Key 行：暂存输入，保存时写入宿主凭据存储（不落配置文件）。 */
+    const KeyField = memo(function KeyField(props) {
+      const [draft, setDraft] = useState('');
+      // Reset the staged input whenever the credential state flips (saved, cleared, ref changed).
+      useEffect(() => { setDraft(''); }, [props.refName, props.configured]);
+      return h('div', { className: 'jev-stg-field' },
+        h('div', { className: 'jev-stg-fieldrow' },
+          h('span', { className: 'jev-stg-label' }, 'API Key'),
+          h('span', { className: 'jev-stg-tag', 'data-overridden': props.configured ? '' : undefined }, props.configured ? '已配置' : '未配置')),
+        h('div', { className: 'jev-stg-inputwrap' },
+          h('input', { type: 'password', className: 'jev-stg-input', value: draft, disabled: props.disabled,
+            placeholder: '留空保持当前密钥', 'aria-label': 'API Key', autoComplete: 'new-password',
+            onChange: (e) => { setDraft(e.target.value); props.onStage(e.target.value); } }),
+          props.configured ? h('button', { type: 'button', className: 'jev-stg-keyclear', disabled: props.disabled,
+            'aria-label': '清除已保存的 API Key', onClick: props.onClear }, '清除') : null));
+    });
+
+    const EMPTY_SECTION = { baseURL: '', apiKeyRef: '', model: '' };
+    /** Normalize a host snapshot into the four draft keys, filling absent sections. */
+    const normalize = (value) => ({
+      provider: value?.provider || 'typesafe',
+      typesafe: { ...EMPTY_SECTION, ...(value?.typesafe || {}) },
+      openrouter: { ...EMPTY_SECTION, ...(value?.openrouter || {}) },
+      bocha: { ...EMPTY_SECTION, ...(value?.bocha || {}) },
+    });
+
     const SettingsSection = memo(function SettingsSection(props) {
       const scope = props.settingsScope;
       const [snap, setSnap] = useState(null);
@@ -110,38 +146,73 @@ window.__ModuleLoader__.load({
       }, [scope]);
       const ready = snap !== null && snap.status === 'ready';
       const writable = ready ? snap.writable !== false : false;
-      const value = (ready ? snap.value : undefined) || {};
-      const provider = value.provider || 'typesafe';
-      const section = value[provider] || {};
+      const committed = ready ? normalize(snap.value) : null;
       const disabled = !writable;
       const [savedAt, setSavedAt] = useState(0);
+      const [saveState, setSaveState] = useState('idle');
 
-      // 写入失败静默：snap 不变，界面仍是旧值（与 mnemo 相同的契约）。
-      const write = useCallback((field, next) => {
-        scope.set(field, next).then((accepted) => { if (accepted) setSavedAt(Date.now()); }).catch(() => {});
-      }, [scope]);
-      // 待落盘 patch 按 section 累积：同 section 跨字段快改不互相吞写。
-      const timers = useRef({});
-      const pending = useRef({});
-      const latest = useRef(section);
-      latest.current = section;
-      useEffect(() => () => { for (const t of Object.values(timers.current)) clearTimeout(t); }, []);
-      const commitField = useCallback((field, next) => {
-        pending.current[field] = next;
-        clearTimeout(timers.current[field]);
-        timers.current[field] = setTimeout(() => {
-          const patch = { ...(latest.current || {}), ...pending.current };
-          pending.current = {};
-          write(provider, patch);
-        }, 350);
-      }, [provider, write]);
-      const clearField = useCallback((field) => {
-        clearTimeout(timers.current[field]);
-        delete pending.current[field];
-        write(provider, { ...(latest.current || {}), [field]: '' });
-      }, [provider, write]);
+      // Edits stay local until the user saves; a new snapshot (external change
+      // or our own save landing) resets the draft to it.
+      const [draft, setDraft] = useState(null);
+      useEffect(() => { setDraft(committed); }, [snap]);
+      const current = draft ?? committed ?? normalize(undefined);
+      const provider = current.provider;
+      const section = current[provider];
+      const dirty = committed !== null && JSON.stringify(current) !== JSON.stringify(committed);
 
-      const onProvider = useCallback((key) => { write('provider', key); }, [write]);
+      // Credential state for the active reference; describe on ref change.
+      const credentials = props.credentials;
+      const refName = (section.apiKeyRef || PROVIDERS[provider].apiKeyRef).trim();
+      const [credential, setCredential] = useState(null);
+      const readCredential = useCallback(async () => {
+        try {
+          // Remote wire answers with an {ok, value} envelope, not a bare map.
+          const response = await credentials.describe([refName]);
+          setCredential(response?.value?.[refName] ?? { configured: false, writable: false });
+        } catch { /* leave stale */ }
+      }, [credentials, refName]);
+      useEffect(() => { setCredential(null); readCredential(); }, [readCredential]);
+      // Key staged for the next save; '' keeps the currently stored key.
+      const [stagedKey, setStagedKey] = useState('');
+      useEffect(() => { setStagedKey(''); }, [refName]);
+      const keyDirty = stagedKey.trim() !== '';
+      const hasChanges = dirty || keyDirty;
+
+      const onProvider = useCallback((key) => {
+        setDraft((prev) => ({ ...(prev ?? committed), provider: key }));
+      }, [committed]);
+      const onField = useCallback((field, value) => {
+        setDraft((prev) => {
+          const base = prev ?? committed;
+          return { ...base, [base.provider]: { ...base[base.provider], [field]: value } };
+        });
+      }, [committed]);
+      const onClearKey = useCallback(async () => {
+        try { await credentials.unset(refName); await readCredential(); } catch { /* */ }
+      }, [credentials, readCredential, refName]);
+
+      const save = useCallback(async () => {
+        if (!hasChanges || saveState === 'saving') return;
+        setSaveState('saving');
+        try {
+          for (const key of ['provider', 'typesafe', 'openrouter', 'bocha']) {
+            if (JSON.stringify(current[key]) !== JSON.stringify(committed[key])) {
+              const accepted = await scope.set(key, current[key]);
+              if (!accepted) throw new Error('refused');
+            }
+          }
+          if (keyDirty) {
+            await credentials.set(refName, stagedKey.trim());
+            setStagedKey('');
+            await readCredential();
+          }
+          setSaveState('idle');
+          setSavedAt(Date.now());
+        } catch {
+          setSaveState('error');
+          setTimeout(() => setSaveState('idle'), 2500);
+        }
+      }, [committed, credentials, current, hasChanges, keyDirty, readCredential, refName, saveState, scope, stagedKey]);
 
       return h('div', { className: 'jev-stg-page' },
         h('div', { className: 'jev-stg-head' },
@@ -155,14 +226,20 @@ window.__ModuleLoader__.load({
             disabled, onClick: () => { if (id !== provider) onProvider(id); } }, PROVIDERS[id].label))),
         FIELDS.map(([field, label]) =>
           h(FieldRow, { key: field, label, value: section[field] || '', fallback: PROVIDERS[provider][field],
-            disabled, onCommit: (v) => commitField(field, v), onClear: () => clearField(field) })),
+            disabled, onCommit: (v) => onField(field, v), onClear: () => onField(field, '') })),
+        h(KeyField, { key: 'key', refName, configured: Boolean(credential?.configured), disabled,
+          onStage: setStagedKey, onClear: onClearKey }),
         h('p', { className: 'jev-stg-hint' },
-          '密钥值不在设置页填写：在 DSH 凭据管理或启动环境中配置上表引用名对应的 API Key，然后对助手说',
-          h('code', null, '使用 Jev，先检查配置，再测试连接'), '。'));
+          'API Key 保存到 DSH 凭据存储，不写入配置文件；也可在凭据管理或启动环境中配置。连接验证对助手说',
+          h('code', null, '使用 Jev，先检查配置，再测试连接'), '。'),
+        h('div', { className: 'jev-stg-savebar' },
+          h('button', { type: 'button', className: 'jev-stg-savebtn', 'data-state': saveState,
+            disabled: disabled || !hasChanges || saveState === 'saving', onClick: save },
+            saveState === 'saving' ? '保存中…' : saveState === 'error' ? '保存失败，点此重试' : '保存修改')));
     });
 
     const name = 'jev-decision-client';
-    const inject = ['slots', 'configForms'];
+    const inject = ['slots', 'configForms', 'remote', 'remote.credentials'];
 
     function apply(ctx) {
       injectStyles();
@@ -173,7 +250,7 @@ window.__ModuleLoader__.load({
           id: 'dsh-jev-decision-model',
           order: 59,
           label: () => 'Jev 决策引擎',
-          inject: () => ({ settingsScope: scope }),
+          inject: () => ({ settingsScope: scope, credentials: ctx.remote.credentials }),
         }, (props) => h(SettingsSection, props)));
     }
 
