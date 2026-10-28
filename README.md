@@ -53,7 +53,7 @@ dsh plugin add /absolute/path/jev-dsh-decision
 如果已经拿到 `.tgz` 安装包，也可以直接安装：
 
 ```sh
-dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
+dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.3.tgz
 ```
 
 ### 2. 配置授权与 Provider
@@ -69,6 +69,8 @@ dsh plugin add /absolute/path/dsh-jev-decision-model-0.1.2.tgz
 | 博查 | `https://jev.bocha.cn` | `bocha-jev-v1` | `BOCHA_JEV_API_KEY` |
 
 每个 Provider 可覆盖 **API 根地址**、**凭据引用名** 和 **模型名**（留空用官方默认；博查可把凭据引用名配置成 `BOCHA_SEARCH_API_KEY` 复用已有密钥）。密钥值不进配置文件：设置页的 **API Key** 输入框走 DSH 凭据存储（`remote.credentials`），配置文件里只有引用名，每次调用实时解析。
+
+OpenRouter 的模型名是**路由别名**：`~typesafe/jev-latest` 的 `~` 前缀让请求自动跟随 TypeSafe 发布的最新版本（响应中的 `model` 字段会显示实际命中的具体版本，如 `typesafe/jev-1.14-20261014`）。覆盖模型名时同样支持固定版本系列（如 `typesafe/jev-1.13`）；**不带 `~` 的 `typesafe/jev-latest` 在该接口上不存在，会被拒绝（HTTP 400）**。TypeSafe 官方 API 与博查不使用 `~` 前缀。
 
 ```yaml
 # ~/.dsh/profiles/<profile>/cordis.patch.yml 中该插件条目的 config
@@ -104,7 +106,7 @@ DSH 凭据由宿主统一持有，插件卸载不会擅自删除可能被其他�
 
 ### 1. 导入安装包
 
-获取已签名的 `jev-decision-model-0.1.2.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
+获取已签名的 `jev-decision-model-0.1.3.ipollowork-plugin` 安装包，在 **扩展 → 导入插件包** 中选择它，确认发布者为 **iPolloWork**。维护者的安装包构建方式见下方“开发和测试”。
 
 已安装旧版时，导入新版可沿用原插件身份升级。显示名称为“Jev DSH 决策引擎”，内部插件 ID `jev-decision-model` 和 DSH 包名 `dsh-jev-decision-model` 保持不变。
 
